@@ -1,0 +1,23 @@
+{
+  "connector.class": "io.tabular.iceberg.connect.IcebergSinkConnector",
+  "transforms.ConvertTimestamp.unix.precision": "seconds",
+  "iceberg.catalog.s3.secret-access-key": "password",
+  "iceberg.catalog.s3.endpoint": "http://minio:9000",
+  "topics": "ethereum.mainnet.blocks",
+  "tasks.max": "1",
+  "transforms.ConvertTimestamp.format": "yyyy-MM-dd HH:mm:ss",
+  "transforms": "ConvertTimestamp",
+  "transforms.ConvertTimestamp.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
+  "iceberg.control.commit.interval-ms": "20000",
+  "iceberg.catalog.client.region": "eu-west-1",
+  "iceberg.catalog.uri": "http://rest:8181",
+  "value.converter.schema.registry.url": "http://schema-registry:8081",
+  "iceberg.tables": "blockchain.ethereum_mainnet_blocks",
+  "iceberg.catalog.warehouse": "s3://demo-iceberg/",
+  "value.converter": "io.confluent.connect.avro.AvroConverter",
+  "transforms.ConvertTimestamp.target.type": "Timestamp",
+  "transforms.ConvertTimestamp.field": "timestamp",
+  "iceberg.catalog.type": "rest",
+  "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+  "iceberg.catalog.s3.access-key-id": "admin"
+}
