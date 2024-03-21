@@ -30,23 +30,18 @@ type BlockHeader struct {
 
 func main() {
 
-	kafkaClient, err := createKafkaClient()
+	kafkaClient, err := kgo.NewClient(kgo.SeedBrokers(BootstrapServers))
 	if err != nil {
-		panic(err)
+		log.Panicf("unable to create kafka client %s", err)
 	}
 
 	// register the schema & get a serializer/deserializer (serde)
-	avroSerde, err := registerSchema("block_header.avsc", "ethereum.mainnet.blocks-value")
+	avroSerde, err := registerSchema[BlockHeader]("block_header.avsc", "ethereum.mainnet.blocks-value")
 	if err != nil {
 		log.Panic(err)
 	}
 
-	// each message should
-	prevBlock := BlockHeader{
-		Number:    10000,
-		Timestamp: time.Now().Unix(),
-	}
-
+	prevBlock := BlockHeader{Number: 10000, Timestamp: time.Now().Unix()}
 	var batch []*kgo.Record
 	for i := 1; i <= 1000000; i++ {
 
@@ -75,50 +70,20 @@ func main() {
 	}
 }
 
-func registerSchema(schemaFilePath string, subject string) (*sr.Serde, error) {
-
-	schemaRegistryClient, err := newSchemaRegistryClient()
-	if err != nil {
-		return nil, err
-	}
-
-	// register the schema and Create Serializer/Deserializer
-	serde, err := newSerde[BlockHeader](schemaRegistryClient, schemaFilePath, subject)
-	if err != nil {
-		return nil, err
-	}
-
-	return serde, nil
-}
-
-func createKafkaClient() (*kgo.Client, error) {
-
-	kafkaClient, err := kgo.NewClient(kgo.SeedBrokers(BootstrapServers))
-	if err != nil {
-		return nil, fmt.Errorf("unable to create kafka client %w", err)
-	}
-
-	return kafkaClient, nil
-}
-
-func newSchemaRegistryClient() (*sr.Client, error) {
+func registerSchema[T any](schemaFilePath string, subject string) (*sr.Serde, error) {
 
 	schemaRegistryClient, err := sr.NewClient(sr.URLs(SchemaRegistryUrl))
 	if err != nil {
-		return nil, fmt.Errorf("unable to create schema registry client %w", err)
+		return nil, fmt.Errorf("unable to create schema registry client %s", err)
 	}
 
-	return schemaRegistryClient, nil
-}
-
-func newSerde[T any](srClient *sr.Client, schemaFilePath string, subject string) (*sr.Serde, error) {
-
+	// register the schema and Create Serializer/Deserializer
 	schemaTextBytes, err := os.ReadFile(schemaFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read schema file %w", err)
 	}
 
-	subjectSchema, err := srClient.CreateSchema(context.Background(), subject, sr.Schema{
+	subjectSchema, err := schemaRegistryClient.CreateSchema(context.Background(), subject, sr.Schema{
 		Schema: string(schemaTextBytes),
 		Type:   sr.TypeAvro,
 	})
