@@ -1,0 +1,24 @@
+input:
+  kafka_franz:
+    seed_brokers:
+      - localhost:19092
+    topics:
+      - my.data
+    client_id: localdev
+    consumer_group: localdev
+    start_from_oldest: true
+
+pipeline:
+  processors:
+    
+    - label: "decoded_proto_sr"
+      schema_registry_decode:
+        url: http://localhost:18081
+    
+    - log:
+        fields_mapping: |
+          root = this
+        message: ""
+  
+output:
+  drop: {}
